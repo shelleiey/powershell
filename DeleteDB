@@ -1,0 +1,20 @@
+$DBS= Get-Content -Path 'D:\Test\colin.txt'#DB Names 
+
+$Server = '127.0.0.1,1433'
+$User = 'sa'
+$Password = 'xxxxxxxxx'
+ForEach($DB IN $DBS){
+$RE1="use  master;"
+$RE2=" drop database "+$DB
+$red=$RE1+$RE2
+invoke-sqlcmd -ServerInstance $Server -U $user -P $password -Query $red  -ErrorAction 'SilentlyContinue'
+If (!$?)
+        {          
+        Write-Host "DELET failed " -ForegroundColor yellow
+        Write-Host $Green"   ERROR--------->Message:$($error[0])"  -ForegroundColor red
+        CONTINUE       
+        }
+Write-Host $DB" ::has been deleted" -ForegroundColor Yellow
+
+}
+
