@@ -89,6 +89,7 @@ foreach ($BackupFolder in $BackupFolders){
                 $ff=$num+=1
                 Write-Host $BackupFolder "Restore ok ! " "End Time is :" $time -ForegroundColor Green
                 Write-Host "Completed the restoration of the "$ff  "DB"  -ForegroundColor green
+		
 
             }
 
