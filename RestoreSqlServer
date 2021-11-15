@@ -1,0 +1,96 @@
+$BackupFolders=Get-Content -Path 'F:\VBDBS.txt'
+$BackupPath1='F:\VBDB\FULLBACKUP\'
+
+#$BackupFolders=Get-ChildItem -Path $BackupPath1 -Name
+#$BackupFolders='CN','FileManagement','Global','SJUSD','ADOSWEGO','BACSD','A-SVPN','CCSD','CVUSD','District_Configuration','GANANDA'
+
+$time=Get-Date -Format 'yyyy/MM/dd hh:mm:ss'
+
+$nud=0
+$num=0
+$resideIn="";
+
+foreach ($BackupFolder in $BackupFolders){
+
+    $E= $BackupPath1+$BackupFolder
+    $bakp=$BackupPath1+$BackupFolder+'\'
+
+
+    $d=Get-ChildItem -Path $E -Recurse -ErrorAction SilentlyContinue -Filter *.bak -Name
+    if(
+    [String]::IsNullOrEmpty($d)
+    ){
+
+        $ffd=$nud+=1
+        Write-Host $BackupFolder "is not a db backup file "-ForegroundColor yellow
+        Write-Host  $ffd "invalid file"  -ForegroundColor yellow
+        continue
+
+    }else{
+        $time=Get-Date -Format 'yyyy/MM/dd hh:mm:ss'
+        Write-Host " Start Restore" $BackupFolder "! StartTime is :" $time -ForegroundColor Green
+
+        $bakpath=$bakp+$d
+        $bakpath
+        $NewDBName = $BackupFolder
+        #$bakpath = 'E:\Program Files\Microsoft SQL Server\MSSQL12.SQLEXPRESS\MSSQL\Backup\rrasa0527.bak'
+        $Server='127.0.0.1,2433'
+        $user='sa'
+        $password='xxxxxxxxx'
+        if([system.string]::IsNullOrEmpty($resideIn))
+        {
+            $pp = invoke-sqlcmd -ServerInstance $Server -U $user -P $password -Query "select * from master.dbo.sysfiles" | select-object filename
+            $path = $pp.filename[0] -replace "([^<>/\\\|:""\*\?]+)+$"
+            $resideIn=$path;
+        }
+    
+        $query="RESTORE FILELISTONLY FROM DISK = N'"+$bakpath+"'"
+        $DBFILES = invoke-sqlcmd -ServerInstance $Server -U $user -P $password -Query $query | select-object LogicalName
+        $DBDATA = $DBFILES.LogicalName[0]
+        $DBLOG = $DBFILES.LogicalName[1]
+        $DBDATAPATH = $resideIn + $NewDBName + '.mdf'
+        $DBLOGPATH = $resideIn + $NewDBName + '_log.ldf' 
+		<#
+        $re = "restore database " + $NewDBName + " from disk='" + $bakpath + "' WITH MOVE '" + $DBDATA + "' TO '" + $DBDATAPATH + "', MOVE '" + $DBLOG + "' TO  '" + $DBLOGPATH + "'  replace,recovery"
+        invoke-sqlcmd -ServerInstance $Server -U $user -P $password -Query $re -connectiontimeout 0  -ErrorAction "SilentlyContinue"
+		#>
+
+		$sqlServerSnapinVersion = (Get-Command Restore-SqlDatabase).ImplementingType.Assembly.GetName().Version.ToString()
+		$assemblySqlServerSmoExtendedFullName = "Microsoft.SqlServer.SmoExtended, Version=$sqlServerSnapinVersion, Culture=neutral, PublicKeyToken=89845dcd8080cc91"
+
+		$RelocateData = New-Object "Microsoft.SqlServer.Management.Smo.RelocateFile, $assemblySqlServerSmoExtendedFullName"($DBDATA, $DBDATAPATH)
+		$RelocateLog = New-Object "Microsoft.SqlServer.Management.Smo.RelocateFile, $assemblySqlServerSmoExtendedFullName"($DBLOG, $DBLOGPATH)
+		$myarr=@($RelocateData,$RelocateLog)
+
+		$pwdS = ConvertTo-SecureString $password -AsPlainText -Force
+		$credential = New-Object System.Management.Automation.PSCredential ($user, $pwdS)
+		restore-sqldatabase -serverinstance $Server -database $NewDBName -backupfile $bakpath -restoreaction database -credential $credential  -RelocateFile $myarr -ReplaceDatabase
+        Start-Sleep -m  2000
+
+
+        If (!$?)
+            {   
+                $timed=Get-Date -Format 'yyyyMMddhhmmss'
+                Write-Host $BackupFolder"restore failed "  -ForegroundColor red
+                Write-Host "ERROR--------->Message:$($error[0])"  -ForegroundColor red
+                $Errorpath='E:\RestoreTest\'+$timed+'RestoreError.txt'
+                $BackupFolder+"  :"+$($error[0])| Out-File -FilePath  $Errorpath -Append -Force
+                $Errorpathdd='E:\RestoreTest\'+$timed+'VBFailedDB.txt'
+                $re | Out-File -FilePath $Errorpathdd  -Append -Force
+                $timed=Get-Date -Format 'yyyyMMddhhmmss'
+                $ErrorpathddS='E:\RestoreTest\'+$timed+'VBFailedDBNames.txt'
+                $NewDBName | Out-File -FilePath $ErrorpathddS  -Append -Force
+
+                continue
+
+             }
+        else{   
+               $time=Get-Date -Format 'yyyy/MM/dd hh:mm:ss'
+                $ff=$num+=1
+                Write-Host $BackupFolder "Restore ok ! " "End Time is :" $time -ForegroundColor Green
+                Write-Host "Completed the restoration of the "$ff  "DB"  -ForegroundColor green
+
+            }
+
+        }
+}
