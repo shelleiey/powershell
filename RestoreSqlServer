@@ -1,7 +1,5 @@
 $BackupFolders=Get-Content -Path 'F:\VBDBS.txt'
 $BackupPath1='F:\VBDB\FULLBACKUP\'
-
-
 $time=Get-Date -Format 'yyyy/MM/dd hh:mm:ss'
 
 $nud=0
