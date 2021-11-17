@@ -1,8 +1,6 @@
 $BackupFolders=Get-Content -Path 'F:\VBDBS.txt'
 $BackupPath1='F:\VBDB\FULLBACKUP\'
 
-#$BackupFolders=Get-ChildItem -Path $BackupPath1 -Name
-#$BackupFolders='CN','FileManagement','Global','SJUSD','ADOSWEGO','BACSD','A-SVPN','CCSD','CVUSD','District_Configuration','GANANDA'
 
 $time=Get-Date -Format 'yyyy/MM/dd hh:mm:ss'
 
