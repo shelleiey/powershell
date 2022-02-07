@@ -13,10 +13,11 @@ steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
 
-- script: |
+- script: 
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
-  env:
-    name: PRERELEASE1N1
-    resourcetype: VirtualMachine
+jobs:
+  envrionment:
+  name: SchoolStrem_PRERELEASE1N1_669
+  resourcetype: VirtualMachine
