@@ -13,8 +13,7 @@ jobs:
 - deployment: VMDeploy
   displayName: Deploy to VM
   environment: 
-   name: SchoolStrem_PRERELEASE1N1_669
-   resourceType: VirtualMachine
+   name: SchoolStrem-669
   strategy:
      runOnce:
         deploy:   
