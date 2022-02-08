@@ -1,0 +1,2 @@
+
+2022-01-07T07:32:40.5510501Z ##[error]The remote session query failed for bkup.northcentralus.cloudapp.azure.com with the following error message: The server certificate on the destination computer (bkup.northcentralus.cloudapp.azure.com:5986) has the following errors:
