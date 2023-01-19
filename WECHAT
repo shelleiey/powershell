@@ -4,32 +4,17 @@ import os
 import time
 from playsound import playsound
 import xml.dom.minidom
+import threading
+from flask import Flask, make_response
 temp = 'E://python//微信脚本//消息' + '//' + '撤回的消息'
 new_temp = 'E://python//微信脚本//消息' + '//' + '聊天记录'
 tp = r"E://python/微信脚本//消息/撤回的消息"
 ntp = r"E://python//微信脚本//消息//聊天记录"
 dict = {}
- 
- 
-def meginfo(sex,dt,fromUser,meginfos):
-    
-    if len(fromUser)==0 :
-             print('时间:{}   You reply msg:【{}】 '.format(dt,meginfos))
-    else:
-           match sex:
-               case 2:
-                  print('时间:{}   Girl：[{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
-               case 1:
-                   print('时间:{}   Boy：[{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
-               case 0:
-                   print('时间:{}   Someone：[{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
-    if fromUser=='Francescad':
-            users=itchat.search_friends("Francescad")
-            username=users[0]['UserName']
-            sendmeg=input('Send:')
-            itchat.send(sendmeg, toUserName=username)
-
-
+filepath=r"E:/Python/wechat/files"
+imagespath=r"E:\Python\wechat\files\230119-203555.png"
+filepath=r"E:\Python\wechat\files\x\1.txt"
+#接收文本消息
 @itchat.msg_register([TEXT, PICTURE, FRIENDS, CARD, MAP, SHARING, RECORDING, ATTACHMENT, VIDEO],isFriendChat=True)
 def resever_info(msg):
     global dict
@@ -47,6 +32,7 @@ def resever_info(msg):
     dt = time.strftime("%Y-%m-%d %H:%M:%S", time_local)
     dict[msgId] = {"info": info, "info_type": info_type, "name": name, "fromUser": fromUser, "dt": dt}
     msg_type = dict[msgId]['info_type']
+    
     if msg_type == 'Text':
        # print(dict)
         text_info = dict[msgId]['info']
@@ -55,6 +41,7 @@ def resever_info(msg):
         meginfo(sex,dt,fromUser,text_info)
 
     elif msg_type == 'Picture':
+        msg.download(filepath+'/'+msg.fileName)#下载文件 （地址为：filepath）
         picture_info = dict[msgId]['info']
         fromUser = dict[msgId]['fromUser']
         dt = dict[msgId]['dt']
@@ -69,8 +56,46 @@ def resever_info(msg):
         recording_info(new_temp + '/' + info_name)
         playsound(new_temp + '/' + info_name)
         meginfo(sex,dt,fromUser,recording_info)
- 
- 
+
+
+#发送文本消息
+def SendTextMessage(fromUser,sendmeg):
+    users=itchat.search_friends(fromUser)
+    username=users[0]['UserName']
+    itchat.send_msg(msg=sendmeg,toUserName=username)
+#发送图片
+def SendimagesMessage(fromUser,imagespath):
+    users=itchat.search_friends(fromUser)
+    username=users[0]['UserName']
+    itchat.send_image(fileDir=imagespath,toUserName=username)
+    print("图片已经发给【{}】".format(fromUser))
+#发送文件
+def SendfileMessage(fromUser,filepath):
+    users=itchat.search_friends(fromUser)
+    username=users[0]['UserName']
+    itchat.send_file(fileDir=filepath,toUserName=username)
+    print("文件已经发给【{}】".format(fromUser))
+
+#控制台展示
+def meginfo(sex,dt,fromUser,meginfos):
+    if len(fromUser)==0 :
+             print('时间:{} | You reply msg:【{}】 '.format(dt,meginfos))
+    else:
+        match sex:
+            case 2:
+                   print('时间:{} | Girl：[{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
+            case 1:
+                   print('时间:{} | Boy：[{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
+            case 0:
+                   print('时间:{} | Someone：[{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
+    if fromUser=='Francescad':
+            print("------有重要信息----------------")
+            print('时间:{} | my lover [{}] sed msg:【{}】 '.format(dt,fromUser,meginfos))
+            sendmeg="go go  go"
+            # SendMessage(fromUser,sendmeg)
+            SendimagesMessage(fromUser,imagespath)
+            SendfileMessage(fromUser,filepath)
+
 @itchat.msg_register(NOTE)
 def note_info(msg):
     content = msg['Content']
@@ -119,7 +144,30 @@ def clear_cache(path):
             clear_cache(c_path)
         else:
             os.remove(c_path)
- 
+def qrCallback(uuid, status, qrcode):
+    if status == '0':
+        global qrSource
+        qrSource = qrcode
+    elif status == '200':
+        qrSource = 'Logged in!'
+    elif status == '201':
+        qrSource = 'Confirm'
+qrSource = ''
+
+# def start_flask():
+#     flaskApp = Flask('itchat')
+#     @flaskApp.route('/')
+#     def return_qr():
+#         if len(qrSource) < 100:
+#             return qrSource
+#         else:
+#             response = make_response(qrSource)
+#             response.headers['Content-Type'] = 'image/jpeg'
+#             return response
+#     flaskApp.run()
+# flaskThread = threading.Thread(target=start_flask)
+# flaskThread.setDaemon(True)
+# flaskThread.start()
  
 if __name__ == '__main__':
     if not os.path.exists(temp):
@@ -129,4 +177,5 @@ if __name__ == '__main__':
     clear_cache(tp)
     clear_cache(ntp)
     itchat.auto_login(hotReload=True)
+    #itchat.auto_login(True,qrCallback=qrCallback)
     itchat.run()
